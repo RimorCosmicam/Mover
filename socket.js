@@ -27,6 +27,15 @@ export class SocketClient {
                 setTimeout(() => this.connect(), 2000); // Reconnect loop
             };
 
+            this.socket.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.type === 'approved') {
+                    this.onApproved?.();
+                } else if (data.type === 'denied') {
+                    this.onDenied?.();
+                }
+            };
+
             this.socket.onerror = (err) => {
                 console.error('WebSocket error:', err);
             };

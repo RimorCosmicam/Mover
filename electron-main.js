@@ -1,4 +1,4 @@
-import { app, BrowserWindow, screen, Menu, dialog, nativeImage } from "electron";
+import { app, BrowserWindow, screen, Menu, dialog, nativeImage, ipcMain } from "electron";
 import liquidGlass from "electron-liquid-glass";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -13,17 +13,8 @@ let mainWindow;
 let actualWsPort = 8080;
 let actualHttpPort = 3000;
 
-function getLocalIp() {
-    const interfaces = os.networkInterfaces();
-    for (const name of Object.keys(interfaces)) {
-        for (const iface of interfaces[name]) {
-            if (iface.family === 'IPv4' && !iface.internal) {
-                return iface.address;
-            }
-        }
-    }
-    return 'localhost';
-}
+let pendingConnection = null;
+let activeConnection = null;
 
 function startServer() {
     return new Promise((resolve) => {
@@ -44,6 +35,7 @@ function startServer() {
 
         function startWs() {
             const wss = new WebSocketServer({ port: actualWsPort });
+
             wss.on('listening', () => {
                 actualWsPort = wss.address().port;
                 console.log(`WebSocket Server running on port ${actualWsPort}`);
@@ -58,7 +50,22 @@ function startServer() {
             });
 
             wss.on('connection', (ws) => {
+                // If there's already an active or pending connection, reject new ones for now
+                if (activeConnection || pendingConnection) {
+                    ws.send(JSON.stringify({ type: 'rejected', reason: 'busy' }));
+                    ws.close();
+                    return;
+                }
+
+                pendingConnection = ws;
+                // Notify the manager UI to show the approval prompt
+                if (mainWindow) {
+                    mainWindow.webContents.send('connection-request');
+                }
+
                 ws.on('message', (message) => {
+                    if (ws !== activeConnection) return; // Only process approved messages
+
                     try {
                         const data = JSON.parse(message);
                         switch (data.type) {
@@ -79,10 +86,35 @@ function startServer() {
                         }
                     } catch (e) { }
                 });
+
+                ws.on('close', () => {
+                    if (ws === activeConnection) activeConnection = null;
+                    if (ws === pendingConnection) {
+                        pendingConnection = null;
+                        if (mainWindow) mainWindow.webContents.send('connection-cancelled');
+                    }
+                });
             });
         }
     });
 }
+
+// IPC Handlers for approval
+ipcMain.on('approve-connection', () => {
+    if (pendingConnection) {
+        activeConnection = pendingConnection;
+        pendingConnection = null;
+        activeConnection.send(JSON.stringify({ type: 'approved' }));
+    }
+});
+
+ipcMain.on('deny-connection', () => {
+    if (pendingConnection) {
+        pendingConnection.send(JSON.stringify({ type: 'denied' }));
+        pendingConnection.close();
+        pendingConnection = null;
+    }
+});
 
 function createMenu() {
     const template = [
