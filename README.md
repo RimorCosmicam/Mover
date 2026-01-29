@@ -13,7 +13,7 @@
 
 Or just download the MacOS app and follow screen instructions.
 
-*Note: Ensure Terminal/Mover has Accessibility permissions in System Settings.*
+*Note: Ensure Mover has Accessibility permissions in System Settings.*
 
 ## 🤝 Credits
 
