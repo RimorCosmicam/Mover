@@ -1,0 +1,29 @@
+{
+  "name": "mover",
+  "version": "1.0.0",
+  "main": "electron-main.js",
+  "type": "module",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "qrcode": "^1.5.3",
+    "robotjs": "^0.6.0",
+    "ws": "^8.17.0",
+    "electron-liquid-glass": "latest"
+  },
+  "devDependencies": {
+    "electron": "^30.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.rimorcosmicam.mover",
+    "productName": "Mover",
+    "mac": {
+      "category": "public.app-category.utilities",
+      "icon": "icons/Icon-iOS-Default-1024x1024@1x.png"
+    }
+  }
+}

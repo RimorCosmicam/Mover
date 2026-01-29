@@ -1,0 +1,135 @@
+import { app, BrowserWindow, screen, Menu, dialog, nativeImage } from "electron";
+import liquidGlass from "electron-liquid-glass";
+import path from "path";
+import { fileURLToPath } from "url";
+import { WebSocketServer } from 'ws';
+import robot from 'robotjs';
+import express from 'express';
+import os from 'os';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+let mainWindow;
+const wsPort = 8080;
+const httpPort = 3000;
+
+function getLocalIp() {
+    const interfaces = os.networkInterfaces();
+    for (const name of Object.keys(interfaces)) {
+        for (const iface of interfaces[name]) {
+            if (iface.family === 'IPv4' && !iface.internal) {
+                return iface.address;
+            }
+        }
+    }
+    return 'localhost';
+}
+
+function startServer() {
+    const serverApp = express();
+    serverApp.use(express.static(__dirname));
+    serverApp.listen(httpPort);
+
+    const wss = new WebSocketServer({ port: wsPort });
+    wss.on('connection', (ws) => {
+        ws.on('message', (message) => {
+            try {
+                const data = JSON.parse(message);
+                switch (data.type) {
+                    case 'move':
+                        const mouse = robot.getMousePos();
+                        robot.moveMouse(mouse.x + data.dx, mouse.y + data.dy);
+                        break;
+                    case 'scroll':
+                        robot.scrollMouse(data.dx, data.dy);
+                        break;
+                    case 'click':
+                        robot.mouseClick();
+                        break;
+                    case 'zoom':
+                        if (data.direction === 'in') robot.keyTap('=', 'command');
+                        else if (data.direction === 'out') robot.keyTap('-', 'command');
+                        break;
+                }
+            } catch (e) { }
+        });
+    });
+}
+
+function createMenu() {
+    const template = [
+        {
+            label: app.name,
+            submenu: [
+                {
+                    label: 'About Mover',
+                    click: () => {
+                        dialog.showMessageBox({
+                            type: 'info',
+                            title: 'About Mover',
+                            message: 'Mover',
+                            detail: 'Created by RimorCosmicam\nVisuals powered by Electron Liquid Glass',
+                            icon: nativeImage.createFromPath(path.join(__dirname, 'icons', 'Icon-iOS-Default-1024x1024@1x.png')).resize({ width: 64, height: 64 })
+                        });
+                    }
+                },
+                { type: 'separator' },
+                { role: 'services' },
+                { type: 'separator' },
+                { role: 'hide' },
+                { role: 'hideOthers' },
+                { role: 'unhide' },
+                { type: 'separator' },
+                { role: 'quit' }
+            ]
+        },
+        {
+            label: 'Window',
+            submenu: [
+                { role: 'minimize' },
+                { role: 'zoom' },
+                { type: 'separator' },
+                { role: 'front' }
+            ]
+        }
+    ];
+
+    const menu = Menu.buildFromTemplate(template);
+    Menu.setApplicationMenu(menu);
+}
+
+app.whenReady().then(() => {
+    createMenu();
+    const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+
+    mainWindow = new BrowserWindow({
+        width: 360,
+        height: 480,
+        transparent: true,
+        frame: false,
+        resizable: false,
+        icon: path.join(__dirname, 'icons', 'Icon-iOS-Default-1024x1024@1x.png'),
+        webPreferences: {
+            nodeIntegration: true,
+            contextIsolation: false
+        }
+    });
+
+    mainWindow.setWindowButtonVisibility(true);
+    mainWindow.loadFile("manager.html");
+
+    mainWindow.webContents.once("did-finish-load", () => {
+        const handle = mainWindow.getNativeWindowHandle();
+        const glassId = liquidGlass.addView(handle, {
+            cornerRadius: 24,
+            tintColor: "#00000005"
+        });
+        liquidGlass.unstable_setVariant(glassId, 2);
+    });
+
+    startServer();
+});
+
+app.on("window-all-closed", () => {
+    if (process.platform !== "darwin") app.quit();
+});

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        :root {
+            --accent: #2ecc71;
+            --text: rgba(255, 255, 255, 0.9);
+        }
+
+        body {
+            margin: 0;
+            padding: 24px;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+            -webkit-app-region: drag;
+        }
+
+        .container {
+            text-align: center;
+            width: 100%;
+            margin-top: -40px;
+            /* Shift content up */
+        }
+
+        h1 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            letter-spacing: -0.02em;
+        }
+
+        p {
+            font-size: 13px;
+            opacity: 0.6;
+            margin-bottom: 24px;
+        }
+
+        #qrcode-container {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: inline-block;
+            margin-bottom: 24px;
+            -webkit-app-region: no-drag;
+        }
+
+        canvas {
+            border-radius: 12px;
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            background: rgba(46, 204, 113, 0.1);
+            color: var(--accent);
+            padding: 6px 12px;
+            border-radius: 100px;
+            border: 1px solid rgba(46, 204, 113, 0.2);
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--accent);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--accent);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Mover</h1>
+        <p>Scan to pair your iPhone</p>
+
+        <div id="qrcode-container">
+            <canvas id="qr-canvas"></canvas>
+        </div>
+
+        <div style="display: flex; justify-content: center;">
+            <div class="status">
+                <div class="status-dot"></div>
+                Server Active
+            </div>
+        </div>
+    </div>
+
+    <script src="node_modules/qrcode/build/qrcode.min.js"></script>
+    <script>
+        const os = require('os');
+        const QRCode = require('qrcode');
+
+        function getLocalIp() {
+            const interfaces = os.networkInterfaces();
+            for (const name of Object.keys(interfaces)) {
+                for (const iface of interfaces[name]) {
+                    if (iface.family === 'IPv4' && !iface.internal) {
+                        return iface.address;
+                    }
+                }
+            }
+            return 'localhost';
+        }
+
+        const ip = getLocalIp();
+        const githubUser = 'RimorCosmicam';
+        const githubPagesUrl = `https://${githubUser}.github.io/Mover/`;
+        const url = `${githubPagesUrl}?ip=${ip}`;
+
+        QRCode.toCanvas(document.getElementById('qr-canvas'), url, {
+            width: 180,
+            margin: 0,
+            color: {
+                dark: '#ffffff',
+                light: '#00000000'
+            }
+        });
+    </script>
+</body>
+
+</html>

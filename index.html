@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Mover</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.json">
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+            }
+        }
+    </script>
+</head>
+
+<body>
+    <canvas id="canvas"></canvas>
+
+    <div id="ui-layer">
+        <button id="action-button" class="glass">
+            <div class="glass-inner"></div>
+        </button>
+
+        <button id="settings-toggle" class="glass">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path
+                    d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                </path>
+            </svg>
+        </button>
+
+        <div id="hud-panel" class="glass">
+            <div class="panel-header">Settings</div>
+            <div class="panel-content">
+                <div class="control-group">
+                    <label>Grid</label>
+                    <input type="checkbox" id="grid-toggle" checked>
+                </div>
+                <div class="control-group">
+                    <label>Density</label>
+                    <input type="range" id="grid-density" min="10" max="100" value="40">
+                </div>
+                <div class="control-group">
+                    <label>Intensity</label>
+                    <input type="range" id="shader-intensity" min="0" max="100" value="50">
+                </div>
+                <div class="control-group">
+                    <label>Axis</label>
+                    <select id="axis-mode">
+                        <option value="xy">X + Y</option>
+                        <option value="y">Y Only</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>Sensitivity</label>
+                    <input type="range" id="sensitivity" min="0" max="100" value="50">
+                </div>
+                <div class="control-group">
+                    <label>Zoom Buttons</label>
+                    <input type="checkbox" id="zoom-toggle">
+                </div>
+                <div class="control-group">
+                    <label>Theme</label>
+                    <select id="theme-selector">
+                        <option value="modern">Modern Blue</option>
+                        <option value="emerald">Emerald Glass</option>
+                        <option value="sunset">Liquid Sunset</option>
+                        <option value="midnight">Deep Midnight</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="zoom-controls">
+        <button id="zoom-in" class="glass zoom-btn">+</button>
+        <button id="zoom-out" class="glass zoom-btn">−</button>
+    </div>
+
+    <script type="module" src="main.js"></script>
+</body>
+
+</html>
