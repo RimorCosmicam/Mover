@@ -218,9 +218,9 @@
         const httpPort = params.get('httpPort') || '3000';
         const wsPort = params.get('wsPort') || '8080';
 
-        const githubUser = 'RimorCosmicam';
-        const githubPagesUrl = `https://${githubUser}.github.io/Mover/`;
-        const url = `${githubPagesUrl}?ip=${ip}&httpPort=${httpPort}&wsPort=${wsPort}`;
+        // POINT DIRECTLY TO LOCAL IP: Browsers block HTTPS -> HTTP connections (Mixed Content)
+        // By using the local HTTP server, we stay in an insecure context that allows ws:// connections.
+        const url = `http://${ip}:${httpPort}/?ip=${ip}&wsPort=${wsPort}`;
 
         QRCode.toCanvas(document.getElementById('qr-canvas'), url, {
             width: 180,
@@ -230,6 +230,30 @@
                 light: '#00000000'
             }
         });
+
+        // Communication with Main Process
+        const { ipcRenderer } = require('electron');
+        const overlay = document.getElementById('approval-overlay');
+        const allowBtn = document.getElementById('allow-btn');
+        const denyBtn = document.getElementById('deny-btn');
+
+        ipcRenderer.on('connection-request', () => {
+            overlay.style.display = 'flex';
+        });
+
+        ipcRenderer.on('connection-cancelled', () => {
+            overlay.style.display = 'none';
+        });
+
+        allowBtn.onclick = () => {
+            ipcRenderer.send('approve-connection');
+            overlay.style.display = 'none';
+        };
+
+        denyBtn.onclick = () => {
+            ipcRenderer.send('deny-connection');
+            overlay.style.display = 'none';
+        };
     </script>
 </body>
 

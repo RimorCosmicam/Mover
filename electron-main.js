@@ -189,8 +189,6 @@ app.whenReady().then(() => {
         });
         liquidGlass.unstable_setVariant(glassId, 2);
     });
-
-    startServer();
 });
 
 app.on("window-all-closed", () => {

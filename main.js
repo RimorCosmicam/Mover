@@ -9,6 +9,48 @@ class App {
         this.scene = new Scene(document.getElementById('canvas'));
         this.socket = new SocketClient();
 
+        // Pairing Handshake Overlays
+        const createOverlay = (id, text, description) => {
+            let div = document.createElement('div');
+            div.id = id;
+            div.style = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.85); backdrop-filter: blur(40px) saturate(180%);
+        display: flex; align-items: center; justify-content: center;
+        color: white; font-family: -apple-system, sans-serif; z-index: 10000;
+        text-align: center; padding: 40px; box-sizing: border-box;
+        transition: opacity 0.4s ease;
+    `;
+            div.innerHTML = `
+        <div style="transform: translateY(-20px)">
+            <h1 style="font-size: 24px; margin-bottom: 12px; font-weight: 600;">${text}</h1>
+            <p style="opacity: 0.5; font-size: 15px; line-height: 1.4;">${description}</p>
+        </div>
+    `;
+            document.body.appendChild(div);
+            return div;
+        };
+
+        const pendingOverlay = createOverlay('pending-overlay', 'Waiting for Approval', 'Please check Mover on your Mac to allow this connection.');
+
+        this.socket.onApproved = () => {
+            pendingOverlay.style.opacity = '0';
+            setTimeout(() => {
+                pendingOverlay.style.display = 'none';
+                if (navigator.vibrate) navigator.vibrate([10, 30, 10]);
+            }, 400);
+        };
+
+        this.socket.onDenied = () => {
+            pendingOverlay.innerHTML = `
+        <div>
+            <h1 style="color: #ff453a; font-size: 24px; margin-bottom: 12px;">Access Denied</h1>
+            <p style="opacity: 0.5;">The Mac refused the connection request.</p>
+            <button onclick="location.reload()" style="margin-top: 24px; padding: 12px 24px; border-radius: 100px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; font-weight: 600;">Retry</button>
+        </div>
+    `;
+        };
+
         this.input = new InputHandler(this.scene.canvas, (gesture) => this.handleGesture(gesture));
 
         this.initUI();
