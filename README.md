@@ -11,6 +11,8 @@
 3. **Pair**: Scan the QR code in the desktop app with your iPhone.
 4. **Control**: Use your iPhone to scroll, click, and move your cursor with zero latency.
 
+Or just download the MacOS app and follow screen instructions.
+
 *Note: Ensure Terminal/Mover has Accessibility permissions in System Settings.*
 
 ## 🤝 Credits
