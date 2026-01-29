@@ -175,6 +175,13 @@
 
         <div id="qrcode-container">
             <canvas id="qr-canvas"></canvas>
+            <div id="pwa-mode-container"
+                style="margin-top: 16px; font-size: 11px; opacity: 0.6; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <span id="pwa-label">GitHub PWA</span>
+                <button id="pwa-toggle"
+                    style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 100px; color: white; cursor: pointer; font-size: 10px;">Switch
+                    to Local</button>
+            </div>
         </div>
 
         <div style="display: flex; justify-content: center;">
@@ -218,18 +225,32 @@
         const httpPort = params.get('httpPort') || '3000';
         const wsPort = params.get('wsPort') || '8080';
 
-        // POINT DIRECTLY TO LOCAL IP: Browsers block HTTPS -> HTTP connections (Mixed Content)
-        // By using the local HTTP server, we stay in an insecure context that allows ws:// connections.
-        const url = `http://${ip}:${httpPort}/?ip=${ip}&wsPort=${wsPort}`;
+        let useLocalPwa = false;
 
-        QRCode.toCanvas(document.getElementById('qr-canvas'), url, {
-            width: 180,
-            margin: 0,
-            color: {
-                dark: '#ffffff',
-                light: '#00000000'
-            }
-        });
+        function updateQR() {
+            const githubUrl = `https://rimorcosmicam.github.io/Mover/?ip=${ip}&wsPort=${wsPort}`;
+            const localUrl = `http://${ip}:${httpPort}/?ip=${ip}&wsPort=${wsPort}`;
+            const finalUrl = useLocalPwa ? localUrl : githubUrl;
+
+            document.getElementById('pwa-label').textContent = useLocalPwa ? 'Local PWA (Compatibility)' : 'GitHub PWA';
+            document.getElementById('pwa-toggle').textContent = useLocalPwa ? 'Switch to GitHub' : 'Switch to Local';
+
+            QRCode.toCanvas(document.getElementById('qr-canvas'), finalUrl, {
+                width: 180,
+                margin: 0,
+                color: {
+                    dark: '#ffffff',
+                    light: '#00000000'
+                }
+            });
+        }
+
+        updateQR();
+
+        document.getElementById('pwa-toggle').onclick = () => {
+            useLocalPwa = !useLocalPwa;
+            updateQR();
+        }
 
         // Communication with Main Process
         const { ipcRenderer } = require('electron');
