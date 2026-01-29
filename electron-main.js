@@ -10,8 +10,8 @@ import os from 'os';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 let mainWindow;
-const wsPort = 8080;
-const httpPort = 3000;
+let actualWsPort = 8080;
+let actualHttpPort = 3000;
 
 function getLocalIp() {
     const interfaces = os.networkInterfaces();
@@ -26,33 +26,61 @@ function getLocalIp() {
 }
 
 function startServer() {
-    const serverApp = express();
-    serverApp.use(express.static(__dirname));
-    serverApp.listen(httpPort);
+    return new Promise((resolve) => {
+        const serverApp = express();
+        serverApp.use(express.static(__dirname));
 
-    const wss = new WebSocketServer({ port: wsPort });
-    wss.on('connection', (ws) => {
-        ws.on('message', (message) => {
-            try {
-                const data = JSON.parse(message);
-                switch (data.type) {
-                    case 'move':
-                        const mouse = robot.getMousePos();
-                        robot.moveMouse(mouse.x + data.dx, mouse.y + data.dy);
-                        break;
-                    case 'scroll':
-                        robot.scrollMouse(data.dx, data.dy);
-                        break;
-                    case 'click':
-                        robot.mouseClick();
-                        break;
-                    case 'zoom':
-                        if (data.direction === 'in') robot.keyTap('=', 'command');
-                        else if (data.direction === 'out') robot.keyTap('-', 'command');
-                        break;
-                }
-            } catch (e) { }
+        const httpServer = serverApp.listen(actualHttpPort, () => {
+            actualHttpPort = httpServer.address().port;
+            console.log(`HTTP Server running on port ${actualHttpPort}`);
+            startWs();
         });
+
+        httpServer.on('error', (e) => {
+            if (e.code === 'EADDRINUSE') {
+                httpServer.listen(0);
+            }
+        });
+
+        function startWs() {
+            const wss = new WebSocketServer({ port: actualWsPort });
+            wss.on('listening', () => {
+                actualWsPort = wss.address().port;
+                console.log(`WebSocket Server running on port ${actualWsPort}`);
+                resolve({ http: actualHttpPort, ws: actualWsPort });
+            });
+
+            wss.on('error', (e) => {
+                if (e.code === 'EADDRINUSE') {
+                    actualWsPort = 0;
+                    startWs();
+                }
+            });
+
+            wss.on('connection', (ws) => {
+                ws.on('message', (message) => {
+                    try {
+                        const data = JSON.parse(message);
+                        switch (data.type) {
+                            case 'move':
+                                const mouse = robot.getMousePos();
+                                robot.moveMouse(mouse.x + data.dx, mouse.y + data.dy);
+                                break;
+                            case 'scroll':
+                                robot.scrollMouse(data.dx, data.dy);
+                                break;
+                            case 'click':
+                                robot.mouseClick();
+                                break;
+                            case 'zoom':
+                                if (data.direction === 'in') robot.keyTap('=', 'command');
+                                else if (data.direction === 'out') robot.keyTap('-', 'command');
+                                break;
+                        }
+                    } catch (e) { }
+                });
+            });
+        }
     });
 }
 
@@ -116,7 +144,10 @@ app.whenReady().then(() => {
     });
 
     mainWindow.setWindowButtonVisibility(true);
-    mainWindow.loadFile("manager.html");
+
+    startServer().then((ports) => {
+        mainWindow.loadURL(`file://${path.join(__dirname, 'manager.html')}?httpPort=${ports.http}&wsPort=${ports.ws}`);
+    });
 
     mainWindow.webContents.once("did-finish-load", () => {
         const handle = mainWindow.getNativeWindowHandle();

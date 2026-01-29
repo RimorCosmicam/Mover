@@ -4,9 +4,10 @@ export class SocketClient {
         // If served from GitHub Pages, we expect an 'ip' param for the local server
         const params = new URLSearchParams(window.location.search);
         const localIp = params.get('ip');
+        const wsPort = params.get('wsPort') || '8080';
         const host = localIp || window.location.hostname;
 
-        this.url = `ws://${host}:8080`;
+        this.url = `ws://${host}:${wsPort}`;
         this.socket = null;
         this.connected = false;
         this.connect();

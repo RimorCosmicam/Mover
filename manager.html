@@ -114,9 +114,13 @@
         }
 
         const ip = getLocalIp();
+        const params = new URLSearchParams(window.location.search);
+        const httpPort = params.get('httpPort') || '3000';
+        const wsPort = params.get('wsPort') || '8080';
+
         const githubUser = 'RimorCosmicam';
         const githubPagesUrl = `https://${githubUser}.github.io/Mover/`;
-        const url = `${githubPagesUrl}?ip=${ip}`;
+        const url = `${githubPagesUrl}?ip=${ip}&httpPort=${httpPort}&wsPort=${wsPort}`;
 
         QRCode.toCanvas(document.getElementById('qr-canvas'), url, {
             width: 180,
